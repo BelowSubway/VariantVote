@@ -4,6 +4,24 @@ Variant Vote is a local web app for blind-comparing image variants. It scans a f
 
 The app runs locally on your machine. Images are not uploaded anywhere.
 
+## Screenshots
+
+### Folder Setup
+
+![Variant Vote folder setup](docs/screenshots/setup.png)
+
+### Blind Voting
+
+![Variant Vote blind voting](docs/screenshots/voting.png)
+
+### Enlarged Image View
+
+![Variant Vote enlarged image view](docs/screenshots/lightbox.png)
+
+### Results
+
+![Variant Vote results](docs/screenshots/results.png)
+
 ## Features
 
 - Local folder scanning
