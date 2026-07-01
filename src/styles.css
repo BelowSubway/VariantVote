@@ -231,7 +231,7 @@ h3 {
 .image-grid {
   --image-count: 3;
   display: grid;
-  grid-template-columns: repeat(var(--image-count), minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: 18px;
   align-items: stretch;
 }
@@ -490,7 +490,7 @@ h3 {
 .thumbnail-grid {
   --category-count: 3;
   display: grid;
-  grid-template-columns: repeat(var(--category-count), minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
   gap: 12px;
 }
 
