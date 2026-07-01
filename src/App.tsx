@@ -286,6 +286,7 @@ export function App() {
   );
   const lightboxImages = lightboxGroup?.shuffledImages ?? [];
   const enlargedImage = lightboxImages.find((image) => image.id === lightbox?.imageId) ?? null;
+  const enlargedImageIndex = lightboxImages.findIndex((image) => image.id === lightbox?.imageId);
   const canVoteFromLightbox = state === "voting" && currentGroup?.id === lightboxGroup?.id && !!enlargedImage;
 
   const moveLightbox = useCallback(
@@ -609,6 +610,7 @@ export function App() {
                 </button>
               </>
             )}
+            {enlargedImageIndex >= 0 && <div className="lightbox-label">{variantLabel(enlargedImageIndex)}</div>}
             <img src={enlargedImage.imageUrl} alt={text.enlargedVariant} />
             {enlargedImage.caption && <p className="lightbox-caption">{enlargedImage.caption}</p>}
             {canVoteFromLightbox && (
