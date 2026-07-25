@@ -614,9 +614,21 @@ export function App() {
             <img src={enlargedImage.imageUrl} alt={text.enlargedVariant} />
             {enlargedImage.caption && <p className="lightbox-caption">{enlargedImage.caption}</p>}
             {canVoteFromLightbox && (
-              <button type="button" className="lightbox-vote" onClick={() => voteForImage(enlargedImage.id)}>
-                {votingMode === "multi" && selectedImageIds.includes(enlargedImage.id) ? text.removeSelection : text.chooseImage}
-              </button>
+              <div className="lightbox-actions">
+                <button type="button" className="lightbox-vote" onClick={() => voteForImage(enlargedImage.id)}>
+                  {votingMode === "multi" && selectedImageIds.includes(enlargedImage.id) ? text.removeSelection : text.chooseImage}
+                </button>
+                {votingMode === "multi" && (
+                  <button
+                    type="button"
+                    className="lightbox-save-vote"
+                    onClick={saveMultiVote}
+                    disabled={selectedImageIds.length === 0}
+                  >
+                    {text.saveSelection}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

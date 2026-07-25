@@ -684,7 +684,6 @@ h3 {
 }
 
 .lightbox-vote {
-  z-index: 2;
   min-width: 220px;
   border: 0;
   border-radius: 6px;
@@ -693,6 +692,37 @@ h3 {
   color: #06110f;
   font-weight: 900;
   box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+}
+
+.lightbox-actions {
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lightbox-save-vote {
+  min-width: 220px;
+  border: 1px solid #53687f;
+  border-radius: 6px;
+  padding: 14px 20px;
+  background: rgba(8, 12, 18, 0.9);
+  color: #eef2f6;
+  font-weight: 900;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+}
+
+.lightbox-save-vote:hover,
+.lightbox-save-vote:focus-visible {
+  background: rgba(32, 43, 56, 0.95);
+}
+
+.lightbox-save-vote:disabled {
+  border-color: #40524e;
+  background: #26312f;
+  color: #9fb0ac;
+  cursor: not-allowed;
 }
 
 .lightbox-vote:hover,
