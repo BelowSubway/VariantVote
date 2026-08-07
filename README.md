@@ -1,8 +1,8 @@
 # Variant Vote
 
-Variant Vote is a local web app for blind-comparing image variants. It scans a folder, groups images by ID, shuffles the visible order, and lets you vote for the best variant without showing the real category during voting.
+Variant Vote is a local web app for blind-comparing image and video variants. It scans a folder, groups media files by ID, shuffles the visible order, and lets you vote for the best variant without showing the real category during voting.
 
-The app runs locally on your machine. Images are not uploaded anywhere.
+The app runs locally on your machine. Media files are not uploaded anywhere.
 
 ## Screenshots
 
@@ -14,7 +14,7 @@ The app runs locally on your machine. Images are not uploaded anywhere.
 
 ![Variant Vote blind voting](docs/screenshots/voting.png)
 
-### Enlarged Image View
+### Enlarged Variant View
 
 ![Variant Vote enlarged image view](docs/screenshots/lightbox.png)
 
@@ -25,12 +25,17 @@ The app runs locally on your machine. Images are not uploaded anywhere.
 ## Features
 
 - Local folder scanning
-- Blind voting for image variants
+- Blind voting for image and video variants
 - Singlevote and Multivote modes
 - Skip option for unclear groups
 - Randomized image order per group
-- Image lightbox with previous/next navigation
-- Optional `.txt` captions shown with matching images
+- Image and video enlarged view with previous/next navigation
+- Native video controls in the comparison and result views
+- Videos loop by default
+- Start or stop all videos in the current voting group at once
+- Mark variants as `Not this` to exclude them from voting and enlarged-view navigation
+- Rejected videos stop immediately and are shown compactly so remaining variants have more room
+- Optional `.txt` captions shown with matching media files
 - Result summary by category
 - Per-group visual result review with selected images highlighted
 - English default UI with German language option
@@ -38,7 +43,7 @@ The app runs locally on your machine. Images are not uploaded anywhere.
 
 ## Filename Format
 
-Images must follow this pattern:
+Images and videos must follow this pattern:
 
 ```text
 category_id.extension
@@ -68,9 +73,15 @@ Supported image formats:
 - `.jpeg`
 - `.webp`
 
+Supported video formats:
+
+- `.mp4`
+- `.webm`
+- `.mov`
+
 ## Optional Text Captions
 
-If a `.txt` file with the same base name as an image exists, its text is displayed with that image.
+If a `.txt` file with the same base name as an image or video exists, its text is displayed with that media file.
 
 Example:
 
@@ -79,7 +90,7 @@ both_00001_.png
 both_00001_.txt
 ```
 
-If all images in a voting group have the same caption text, Variant Vote shows it once in a shared full-width box. If captions differ, each image shows its own caption.
+If all media files in a voting group have the same caption text, Variant Vote shows it once in a shared full-width box. If captions differ, each variant shows its own caption.
 
 ## Installation
 
@@ -113,15 +124,19 @@ http://127.0.0.1:5173/
 
 1. Start Variant Vote.
 2. Choose `Singlevote` or `Multivote`.
-3. Enter the local folder path containing your images.
+3. Enter the local folder path containing your images and/or videos.
 4. Click `Scan`.
-5. Vote through each image group.
+5. Vote through each variant group.
 6. Use `Skip` if you do not want to vote for a group.
 7. Review the final results.
 
-In `Singlevote`, selecting one image immediately saves the vote and moves to the next group.
+Videos have native playback controls in the comparison grid and loop by default. Use `Start all videos` or `Stop all videos` to control every non-rejected video in the current group together.
 
-In `Multivote`, you can select multiple images, remove selections, and then click `Save selection`.
+Use `Not this` to mark a variant you want to exclude. It receives a red outline, cannot be selected as a vote, and is skipped in the enlarged view. Marking a video as `Not this` stops it immediately and makes its preview compact, giving the remaining variants more display space. Use `Open larger view` to open a video or image in the enlarged player; there you can move between the remaining variants with the arrow buttons or arrow keys.
+
+In `Singlevote`, selecting one variant immediately saves the vote and moves to the next group.
+
+In `Multivote`, you can select multiple variants, remove selections, and then click `Save selection`.
 
 ## Result View
 
@@ -134,7 +149,7 @@ The result page shows:
 - skipped single-image groups
 - all categories, including categories with zero votes
 - all winners in case of ties
-- per-group visual review with selected images highlighted
+- per-group visual review with selected variants highlighted
 
 ## Development Commands
 
@@ -160,7 +175,7 @@ npm run dev
 
 Variant Vote is designed for local use only.
 
-- No image upload
+- No image or video upload
 - No external processing
 - No user accounts
 - No online hosting required

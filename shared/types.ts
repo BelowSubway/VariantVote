@@ -4,6 +4,7 @@ export type ImageItem = {
   groupId: string;
   filename: string;
   imageUrl: string;
+  mediaType: "image" | "video";
   caption?: string;
 };
 

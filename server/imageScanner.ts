@@ -2,7 +2,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { ImageGroup, ImageItem, ScanResponse } from "../shared/types";
 
-const SUPPORTED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+const VIDEO_EXTENSIONS = new Set([".mp4", ".webm", ".mov"]);
 
 export type ImageRegistry = Map<string, string>;
 
@@ -12,11 +13,12 @@ type ParsedImage = {
   filename: string;
   absolutePath: string;
   captionPath?: string;
+  mediaType: "image" | "video";
 };
 
 export function parseImageFilename(filename: string): Omit<ParsedImage, "absolutePath"> | null {
   const extension = path.extname(filename).toLowerCase();
-  if (!SUPPORTED_EXTENSIONS.has(extension)) {
+  if (!IMAGE_EXTENSIONS.has(extension) && !VIDEO_EXTENSIONS.has(extension)) {
     return null;
   }
 
@@ -32,7 +34,7 @@ export function parseImageFilename(filename: string): Omit<ParsedImage, "absolut
     return null;
   }
 
-  return { category, groupId, filename };
+  return { category, groupId, filename, mediaType: VIDEO_EXTENSIONS.has(extension) ? "video" : "image" };
 }
 
 export function compareGroupIds(left: string, right: string): number {
@@ -134,6 +136,7 @@ export async function scanImageFolder(folderPath: string, registry: ImageRegistr
           groupId,
           filename: image.filename,
           imageUrl: `/api/images/${encodeURIComponent(imageId)}?v=${encodeURIComponent(scanVersion)}`,
+          mediaType: image.mediaType,
           caption
         };
       })

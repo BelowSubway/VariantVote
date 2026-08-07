@@ -19,6 +19,12 @@ describe("parseImageFilename", () => {
     });
   });
 
+  it("recognizes supported video files", () => {
+    expect(parseImageFilename("Krea_1.MP4")).toMatchObject({ category: "Krea", groupId: "1", mediaType: "video" });
+    expect(parseImageFilename("Runway_1.webm")).toMatchObject({ category: "Runway", groupId: "1", mediaType: "video" });
+    expect(parseImageFilename("Pika_1.mov")).toMatchObject({ category: "Pika", groupId: "1", mediaType: "video" });
+  });
+
   it("ignores trailing underscores after the id", () => {
     expect(parseImageFilename("both_00001_.png")).toMatchObject({
       category: "both",

@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, RotateCcw, Trophy, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ImageGroup, ScanResponse, Vote } from "../shared/types";
 
 type SessionGroup = ImageGroup & {
@@ -31,9 +31,14 @@ type TranslationKey =
   | "votingQuestion"
   | "selectedCount"
   | "openImageHint"
-  | "chooseImage"
+  | "openMedia"
+  | "chooseVariant"
   | "removeSelection"
   | "saveSelection"
+  | "startAll"
+  | "stopAll"
+  | "notThis"
+  | "removeNotThis"
   | "skip"
   | "resultsEyebrow"
   | "resultsTitle"
@@ -48,11 +53,11 @@ type TranslationKey =
   | "visualResultsEyebrow"
   | "visualResultsTitle"
   | "selected"
-  | "missingImage"
-  | "enlargedImage"
-  | "closeImage"
-  | "previousImage"
-  | "nextImage"
+  | "missingVariant"
+  | "enlargedVariantDialog"
+  | "closeVariant"
+  | "previousVariant"
+  | "nextVariant"
   | "enlargedVariant";
 
 const translations: Record<Language, Record<TranslationKey, string>> = {
@@ -60,21 +65,26 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     appTitle: "Variant Vote",
     groupProgress: "Group {current} of {total}",
     setupTitle: "Load Folder",
-    setupCopy: "Enter the local path to the folder whose images you want to compare.",
+    setupCopy: "Enter the local path to the folder whose variants you want to compare.",
     votingMode: "Voting mode",
     singlevote: "Singlevote",
     multivote: "Multivote",
-    folderPlaceholder: "e.g. G:\\Images\\Comparison",
+    folderPlaceholder: "e.g. G:\\Variants\\Comparison",
     loading: "Loading...",
     scan: "Scan",
     loadFolderError: "The folder could not be loaded.",
     unknownError: "Unknown error.",
     votingQuestion: "Which variant do you like best?",
     selectedCount: "{count} selected",
-    openImageHint: "Click image to enlarge",
-    chooseImage: "Choose this image",
+    openImageHint: "Click variant to enlarge",
+    openMedia: "Open larger view",
+    chooseVariant: "Choose this variant",
     removeSelection: "Remove selection",
     saveSelection: "Save selection",
+    startAll: "Start all videos",
+    stopAll: "Stop all videos",
+    notThis: "Not this",
+    removeNotThis: "Undo not this",
     skip: "Skip",
     resultsEyebrow: "Evaluation",
     resultsTitle: "Results",
@@ -84,37 +94,42 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     skipped: "skipped",
     ignoredFiles: "ignored files",
     skippedGroups: "skipped groups",
-    noCategories: "No image categories found.",
+    noCategories: "No variant categories found.",
     votes: "votes",
     visualResultsEyebrow: "Individual Results",
-    visualResultsTitle: "Selected Images per Group",
+    visualResultsTitle: "Selected Variants per Group",
     selected: "Selected",
-    missingImage: "No image",
-    enlargedImage: "Enlarged image",
-    closeImage: "Close image",
-    previousImage: "Previous image",
-    nextImage: "Next image",
+    missingVariant: "No variant",
+    enlargedVariantDialog: "Enlarged variant",
+    closeVariant: "Close variant",
+    previousVariant: "Previous variant",
+    nextVariant: "Next variant",
     enlargedVariant: "Enlarged variant"
   },
   de: {
     appTitle: "Variant Vote",
     groupProgress: "Gruppe {current} von {total}",
     setupTitle: "Ordner laden",
-    setupCopy: "Gib den lokalen Pfad zu dem Ordner ein, dessen Bilder verglichen werden sollen.",
+    setupCopy: "Gib den lokalen Pfad zu dem Ordner ein, dessen Varianten verglichen werden sollen.",
     votingMode: "Votingmodus",
     singlevote: "Singlevote",
     multivote: "Multivote",
-    folderPlaceholder: "z. B. G:\\Bilder\\Vergleich",
+    folderPlaceholder: "z. B. G:\\Varianten\\Vergleich",
     loading: "Lade...",
     scan: "Scannen",
     loadFolderError: "Der Ordner konnte nicht geladen werden.",
     unknownError: "Unbekannter Fehler.",
     votingQuestion: "Welche Variante gefaellt dir am besten?",
     selectedCount: "{count} ausgewaehlt",
-    openImageHint: "Bild anklicken zum Vergroessern",
-    chooseImage: "Dieses Bild waehlen",
+    openImageHint: "Variante anklicken zum Vergroessern",
+    openMedia: "Grossansicht oeffnen",
+    chooseVariant: "Diese Variante waehlen",
     removeSelection: "Auswahl entfernen",
     saveSelection: "Auswahl speichern",
+    startAll: "Alle Videos starten",
+    stopAll: "Alle Videos stoppen",
+    notThis: "Nicht diese",
+    removeNotThis: "Nicht diese entfernen",
     skip: "Skip",
     resultsEyebrow: "Auswertung",
     resultsTitle: "Ergebnis",
@@ -124,16 +139,16 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     skipped: "geskippt",
     ignoredFiles: "ignorierte Dateien",
     skippedGroups: "uebersprungene Gruppen",
-    noCategories: "Keine Bildkategorien gefunden.",
+    noCategories: "Keine Variantenkategorien gefunden.",
     votes: "Stimmen",
     visualResultsEyebrow: "Einzelwertung",
-    visualResultsTitle: "Gewaehlte Bilder pro Gruppe",
+    visualResultsTitle: "Gewaehlte Varianten pro Gruppe",
     selected: "Gewaehlt",
-    missingImage: "Kein Bild",
-    enlargedImage: "Vergroessertes Bild",
-    closeImage: "Bild schliessen",
-    previousImage: "Vorheriges Bild",
-    nextImage: "Naechstes Bild",
+    missingVariant: "Keine Variante",
+    enlargedVariantDialog: "Vergroesserte Variante",
+    closeVariant: "Variante schliessen",
+    previousVariant: "Vorherige Variante",
+    nextVariant: "Naechste Variante",
     enlargedVariant: "Vergroesserte Variante"
   }
 };
@@ -165,10 +180,12 @@ export function App() {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [skippedGroupIds, setSkippedGroupIds] = useState<string[]>([]);
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([]);
+  const [rejectedImageIds, setRejectedImageIds] = useState<string[]>([]);
   const [state, setState] = useState<AppState>("setup");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const videoRefs = useRef(new Map<string, HTMLVideoElement>());
 
   const text = translations[language];
   const locale = language === "de" ? "de-DE" : "en-US";
@@ -181,6 +198,7 @@ export function App() {
   const advanceGroup = useCallback(() => {
     setLightbox(null);
     setSelectedImageIds([]);
+    setRejectedImageIds([]);
 
     if (currentIndex + 1 >= groups.length) {
       setState("results");
@@ -215,6 +233,7 @@ export function App() {
       setVotes([]);
       setSkippedGroupIds([]);
       setSelectedImageIds([]);
+      setRejectedImageIds([]);
       setCurrentIndex(0);
       setLightbox(null);
       setState(sessionGroups.length > 0 ? "voting" : "results");
@@ -263,6 +282,17 @@ export function App() {
     [advanceGroup, votesForImages, votingMode]
   );
 
+  const toggleRejectedImage = useCallback((imageId: string) => {
+    const isBeingRejected = !rejectedImageIds.includes(imageId);
+    if (isBeingRejected) {
+      videoRefs.current.get(imageId)?.pause();
+    }
+    setRejectedImageIds((rejectedIds) =>
+      rejectedIds.includes(imageId) ? rejectedIds.filter((id) => id !== imageId) : [...rejectedIds, imageId]
+    );
+    setSelectedImageIds((selectedIds) => selectedIds.filter((id) => id !== imageId));
+  }, [rejectedImageIds]);
+
   const saveMultiVote = () => {
     const nextVotes = votesForImages(selectedImageIds);
     if (nextVotes.length === 0) {
@@ -280,11 +310,36 @@ export function App() {
     advanceGroup();
   };
 
+  const startAllVideos = () => {
+    currentGroup?.shuffledImages.forEach((image) => {
+      if (image.mediaType !== "video" || rejectedImageIds.includes(image.id)) {
+        return;
+      }
+
+      const video = videoRefs.current.get(image.id);
+      if (video) {
+        video.currentTime = 0;
+        void video.play().catch(() => undefined);
+      }
+    });
+  };
+
+  const stopAllVideos = () => {
+    videoRefs.current.forEach((video) => {
+      video.pause();
+      video.currentTime = 0;
+    });
+  };
+
+  const hasVideos = currentGroup?.shuffledImages.some((image) => image.mediaType === "video");
+
   const lightboxGroup = useMemo(
     () => (lightbox ? groups.find((group) => group.id === lightbox.groupId) : undefined),
     [groups, lightbox]
   );
-  const lightboxImages = lightboxGroup?.shuffledImages ?? [];
+  const lightboxImages = (lightboxGroup?.shuffledImages ?? []).filter(
+    (image) => state !== "voting" || lightboxGroup?.id !== currentGroup?.id || !rejectedImageIds.includes(image.id)
+  );
   const enlargedImage = lightboxImages.find((image) => image.id === lightbox?.imageId) ?? null;
   const enlargedImageIndex = lightboxImages.findIndex((image) => image.id === lightbox?.imageId);
   const canVoteFromLightbox = state === "voting" && currentGroup?.id === lightboxGroup?.id && !!enlargedImage;
@@ -366,6 +421,7 @@ export function App() {
     setVotes([]);
     setSkippedGroupIds([]);
     setSelectedImageIds([]);
+    setRejectedImageIds([]);
     setCurrentIndex(0);
     setError("");
     setLightbox(null);
@@ -437,20 +493,66 @@ export function App() {
             </p>
           </div>
 
+          {hasVideos && (
+            <div className="video-actions">
+              <button type="button" className="start-all-button" onClick={startAllVideos}>
+                {text.startAll}
+              </button>
+              <button type="button" className="stop-all-button" onClick={stopAllVideos}>
+                {text.stopAll}
+              </button>
+            </div>
+          )}
+
           <div className="image-grid" style={{ "--image-count": currentGroup.shuffledImages.length } as React.CSSProperties}>
             {currentGroup.shuffledImages.map((image, index) => {
               const isSelected = selectedImageIds.includes(image.id);
+              const isRejected = rejectedImageIds.includes(image.id);
 
               return (
-                <article className={`image-choice ${isSelected ? "selected" : ""}`} key={image.id}>
+                <article
+                  className={`image-choice ${isSelected ? "selected" : ""} ${isRejected ? "rejected" : ""} ${
+                    isRejected && image.mediaType === "video" ? "rejected-video" : ""
+                  }`}
+                  key={image.id}
+                >
                   <div className="choice-label">{variantLabel(index)}</div>
-                  <button type="button" className="image-button" onClick={() => openLightbox(currentGroup.id, image.id)}>
-                    <img src={image.imageUrl} alt={variantLabel(index)} />
-                  </button>
+                  {image.mediaType === "video" ? (
+                    <div className="video-preview">
+                      <video
+                        ref={(element) => {
+                          if (element) {
+                            videoRefs.current.set(image.id, element);
+                          } else {
+                            videoRefs.current.delete(image.id);
+                          }
+                        }}
+                        controls
+                        loop
+                        preload="metadata"
+                        playsInline
+                        aria-label={variantLabel(index)}
+                      >
+                        <source src={image.imageUrl} />
+                      </video>
+                      <button type="button" className="open-media-button" onClick={() => openLightbox(currentGroup.id, image.id)}>
+                        {text.openMedia}
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" className="image-button" onClick={() => openLightbox(currentGroup.id, image.id)}>
+                      <img src={image.imageUrl} alt={variantLabel(index)} />
+                    </button>
+                  )}
                   {!sharedCurrentGroupCaption && image.caption && <p className="image-caption">{image.caption}</p>}
-                  <button type="button" className="select-button" onClick={() => voteForImage(image.id)}>
-                    {votingMode === "multi" && isSelected ? text.removeSelection : text.chooseImage}
-                  </button>
+                  <div className="choice-actions">
+                    <button type="button" className="select-button" onClick={() => voteForImage(image.id)} disabled={isRejected}>
+                      {votingMode === "multi" && isSelected ? text.removeSelection : text.chooseVariant}
+                    </button>
+                    <button type="button" className={`reject-button ${isRejected ? "active" : ""}`} onClick={() => toggleRejectedImage(image.id)}>
+                      {isRejected ? text.removeNotThis : text.notThis}
+                    </button>
+                  </div>
                 </article>
               );
             })}
@@ -565,7 +667,22 @@ export function App() {
                             return (
                               <div className="thumbnail-choice missing" key={category}>
                                 <span>{category}</span>
-                                <div>{text.missingImage}</div>
+                                <div>{text.missingVariant}</div>
+                              </div>
+                            );
+                          }
+
+                          if (image.mediaType === "video") {
+                            return (
+                              <div className={`thumbnail-choice ${wasSelected ? "selected" : ""}`} key={image.id}>
+                                <span>{image.category}</span>
+                                <video controls loop preload="metadata" playsInline aria-label={image.category}>
+                                  <source src={image.imageUrl} />
+                                </video>
+                                <button type="button" className="open-media-button" onClick={() => openLightbox(group.id, image.id)}>
+                                  {text.openMedia}
+                                </button>
+                                {image.caption && <p>{image.caption}</p>}
                               </div>
                             );
                           }
@@ -594,29 +711,59 @@ export function App() {
       )}
 
       {lightbox && enlargedImage && (
-        <div className="lightbox" role="dialog" aria-modal="true" aria-label={text.enlargedImage}>
-          <button type="button" className="lightbox-backdrop" aria-label={text.closeImage} onClick={() => setLightbox(null)} />
+        <div className="lightbox" role="dialog" aria-modal="true" aria-label={text.enlargedVariantDialog}>
+          <button type="button" className="lightbox-backdrop" aria-label={text.closeVariant} onClick={() => setLightbox(null)} />
           <div className="lightbox-content">
-            <button type="button" className="lightbox-close" aria-label={text.closeImage} onClick={() => setLightbox(null)}>
+            <button type="button" className="lightbox-close" aria-label={text.closeVariant} onClick={() => setLightbox(null)}>
               <X size={22} />
             </button>
             {lightboxImages.length > 1 && (
               <>
-                <button type="button" className="lightbox-nav previous" aria-label={text.previousImage} onClick={() => moveLightbox(-1)}>
+                <button type="button" className="lightbox-nav previous" aria-label={text.previousVariant} onClick={() => moveLightbox(-1)}>
                   <ChevronLeft size={34} />
                 </button>
-                <button type="button" className="lightbox-nav next" aria-label={text.nextImage} onClick={() => moveLightbox(1)}>
+                <button type="button" className="lightbox-nav next" aria-label={text.nextVariant} onClick={() => moveLightbox(1)}>
                   <ChevronRight size={34} />
                 </button>
               </>
             )}
             {enlargedImageIndex >= 0 && <div className="lightbox-label">{variantLabel(enlargedImageIndex)}</div>}
-            <img src={enlargedImage.imageUrl} alt={text.enlargedVariant} />
+            {enlargedImage.mediaType === "video" ? (
+              <video
+                key={enlargedImage.id}
+                className="lightbox-video"
+                controls
+                autoPlay
+                loop
+                preload="metadata"
+                playsInline
+                aria-label={text.enlargedVariant}
+              >
+                <source src={enlargedImage.imageUrl} />
+              </video>
+            ) : (
+              <img src={enlargedImage.imageUrl} alt={text.enlargedVariant} />
+            )}
             {enlargedImage.caption && <p className="lightbox-caption">{enlargedImage.caption}</p>}
             {canVoteFromLightbox && (
               <div className="lightbox-actions">
                 <button type="button" className="lightbox-vote" onClick={() => voteForImage(enlargedImage.id)}>
-                  {votingMode === "multi" && selectedImageIds.includes(enlargedImage.id) ? text.removeSelection : text.chooseImage}
+                  {votingMode === "multi" && selectedImageIds.includes(enlargedImage.id) ? text.removeSelection : text.chooseVariant}
+                </button>
+                <button
+                  type="button"
+                  className="lightbox-reject"
+                  onClick={() => {
+                    const nextImage = lightboxImages[(enlargedImageIndex + 1) % lightboxImages.length];
+                    toggleRejectedImage(enlargedImage.id);
+                    if (nextImage && nextImage.id !== enlargedImage.id) {
+                      setLightbox({ groupId: lightbox.groupId, imageId: nextImage.id });
+                    } else {
+                      setLightbox(null);
+                    }
+                  }}
+                >
+                  {text.notThis}
                 </button>
                 {votingMode === "multi" && (
                   <button
